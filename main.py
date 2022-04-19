@@ -16,7 +16,7 @@ def save_roles_watch_to_database():
 client = commands.Bot(commands.when_mentioned_or('?'))
 slash = SlashCommand(client, override_type=True, sync_commands=True)
 
-slash_guilds = [366792929865498634, 160907545018499072, 842812244965326869]
+slash_guilds = [842812244965326869, 366792929865498634, 160907545018499072]
 
 @client.event
 async def on_ready():
