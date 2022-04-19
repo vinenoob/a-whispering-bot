@@ -16,7 +16,7 @@ def save_roles_watch_to_database():
 client = commands.Bot(commands.when_mentioned_or('?'))
 slash = SlashCommand(client, override_type=True, sync_commands=True)
 
-slash_guilds = [366792929865498634, 160907545018499072]
+slash_guilds = [366792929865498634, 160907545018499072, 842812244965326869]
 
 @client.event
 async def on_ready():
@@ -97,7 +97,11 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
             if member.display_name[:len(role_string)] == role_string:
                 return
             name_tracker[member.id] = member.display_name
-            await member.edit(nick=f"({role_string}) {member.display_name}"[:32])
+            try:
+                await member.edit(nick=f"({role_string}) {member.display_name}"[:32])
+            except discord.errors.Forbidden:
+                print(f"Can\'t edit {member}: missing permissions")
+                return
         return
     if after.channel is None:
         #They are leaving a voice channel
