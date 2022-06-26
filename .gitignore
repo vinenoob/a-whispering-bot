@@ -2,3 +2,6 @@ venv/
 key*
 roleData.json
 notes.txt
+*firebase*.json
+__pycache__
+.vscode
