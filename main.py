@@ -14,13 +14,16 @@ from os.path import exists
 # from whispfirebase import *
 from name import Name
 from schedule import Schedule
+from time_convert import TimeConvert
 
 intents = discord.Intents.default()
 intents.members = True
+intents.reactions = True
 client = commands.AutoShardedBot(commands.when_mentioned_or('?'), intents = intents)
 slash = SlashCommand(client, override_type=True, sync_commands=True, debug_guild=366792929865498634)
 client.add_cog(Name(client))
 client.add_cog(Schedule(client))
+client.add_cog(TimeConvert(client))
 # slash_guilds = [842812244965326869, 366792929865498634, 160907545018499072]
 slash_guilds = [366792929865498634]
 

@@ -8,11 +8,9 @@ from discord_slash.model import SlashCommandOptionType
 from discord_slash.utils.manage_commands import create_option
 from discord.utils import get
 import pytz
+from dateutil import parser
 from whispfirebase import *
-
-timezone_abbrv_to_gmt = {
-    
-}
+from wisp_tz import tzinfos
 
 class Schedule(commands.Cog):
     LFG_BASE = "LFG"
@@ -28,29 +26,24 @@ class Schedule(commands.Cog):
 
     @tasks.loop(seconds=30)
     async def event_watcher(self):
-        tz = pytz.timezone('Europe/London')
-        now = datetime.now(tz)
-        date = f"{now.month if len(str(now.month)) > 1 else f'0{now.month}'}-{now.day if len(str(now.day)) > 1 else f'0{now.day}'}"
-        events_doc_ref = events_ref.document(date)
-        events_doc = events_doc_ref.get()
-        events = events_doc.to_dict()
-        for key in events:
-            event = events[key]
-            #TODO: replace True below with time check
-            if (event['time'] == "now" or True) and not event['notification-sent']:
-                guild_doc = guilds_ref.document(str(event['guild'])).get()
-                guild_info = guild_doc.to_dict()
-                channel: discord.TextChannel = self.client.get_channel(guild_info['lfg_channel'])
-                await channel.send(f"event {events} is now")
+        print("Checking events")
+        now = datetime.now(pytz.UTC)
+        #I can't make a compounded query work even with a composite index, so we just check for the notification_sent in the for loop
+        event_docs = events_ref.where("timestamp", ">=", int(now.timestamp())).where("timestamp", "<=", int(now.timestamp()) + (60*30)).stream()#.where("notification_sent", "!=", True).stream()
+        for event_doc in event_docs:
+            #the below is temporary while my index builds
+            event = event_doc.to_dict()
+            if event["notification_sent"]:
+                continue
+            guild_doc = guilds_ref.document(str(event['guild'])).get()
+            guild_info = guild_doc.to_dict()
+            channel: discord.TextChannel = self.client.get_channel(guild_info['lfg_channel'])
+            await channel.send(f"event {event} is now")
+            event['notification_sent'] = True
+            event_doc.reference.update(event)
+            print(f'{event_doc.id} => {event_doc.to_dict()}')
         self.callback_done.set()
 
-
-        #TODO: Look at the events collection for todays date. If there is something,
-        #  check the time to see if it needs to be warned about and then mark it as
-        #  checked.
-        #TODO: ALTERNATE: b6uild a similar caching system as the user cache in name
-        #TODO: on update, check to see if it was today. check if the day has changed
-        print("Watching for events...")
 
     lfg_set_channel_options = [
         create_option(
@@ -84,10 +77,10 @@ class Schedule(commands.Cog):
         ),
         create_option(
             name="time",
-            description='''Date and time for lfg, ie 7:30pm CT 05/22. Leave date empty to start today, and nothing for now''',
+            description='''Date and time for lfg, ie 7:30pm CT 05/22''', #. Leave date empty to start today, and nothing for now
             option_type=SlashCommandOptionType.STRING,
             # choices = ['Now'],
-            required=False,
+            required=True,
         ),
         create_option(
             name="description",
@@ -99,48 +92,22 @@ class Schedule(commands.Cog):
     ]
     @cog_ext.cog_subcommand(base=LFG_BASE, name="create", description="Create an lfg", options=lfg_options, guild_ids=slash_guilds)
     async def add_lfg(self, ctx: SlashContext, activity, time='now', description=""):
-        tz = pytz.timezone('Etc/GMT-0')
-        tz2 = pytz.timezone('Etc/GMT-2')
-        now = datetime.now(tz)
-        now2 = datetime.now(tz2)
+        if len(time.split(':')[0]) == 1:
+            time = f"0{time}"
+        dt_obj = parser.parse(f"{time}", tzinfos=tzinfos)
+        dt_obj = dt_obj.astimezone(pytz.UTC)
 
-        # try:
-        #     time_input_split = time.split(' ')
-        #     activity_time = time_input_split[0]
-        #     if activity_time != 'now':
-        #         time_zone = time_input_split[1]
-        #         try:
-        #             date = time_input_split[2]
-        #             date = date.replace('/', '-')
-        #         except Exception:
-        #             date = f"{now.day}-{now.month}"
-        #     else:
-        #         time_zone = "N/A"
-        #         date = f"{now.day}-{now.month}"
-        # except Exception:
-        #     msg = await ctx.reply('Bad time input, try again')
-        #     await msg.delete(delay=5)
-        #     return
-        # https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
-        # date = f"{now.month if len(str(now.month)) > 1 else f'0{now.month}'}-{now.day if len(str(now.day)) > 1 else f'0{now.day}'}"
-        dt_obj = datetime.strptime(f"{time} {time_zone}", "%m-%d  %Z")
-        dt_obj = dt_obj.replace(year=now.year)
-        x = dt_obj.astimezone(tz)
-        if time is None:
-            time = f"{now.hour}:{now.minute}"
-        event = events_ref.document(date)
-        event_doc = event.get()
+
+        # date_str = dt_obj.strftime("%m-%d-%y")
         event_id = uuid.uuid4().hex
+        event = events_ref.document(event_id)
+        event_doc = event.get()
         event_dict = {
-            str(event_id):{
-                "time": activity_time,
-                "date": dt_obj.timestamp(),
-                "time_zone": time_zone,
-                "activity": activity,
-                "description": description,
-                "notification-sent": False,
-                "guild": ctx.guild_id
-            }
+            "timestamp": int(dt_obj.timestamp()),
+            "activity": activity,
+            "description": description,
+            "notification_sent": False,
+            "guild": ctx.guild_id
         }
         if event_doc.exists:
             event.update(event_dict)
@@ -151,8 +118,9 @@ class Schedule(commands.Cog):
                 # title=activity,
                 # description=description,
             )
+        
         embed.add_field(name="Activity:", value=activity)
         embed.add_field(name="Start Time:", value=time)
         embed.set_footer(text=f"creator | {ctx.author.display_name}")
         msg = await ctx.send(embed=embed)
-        # await msg.delete(delay=5)
+        await msg.delete(delay=5)
