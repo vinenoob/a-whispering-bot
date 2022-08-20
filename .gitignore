@@ -5,3 +5,4 @@ notes.txt
 *firebase*.json
 __pycache__
 .vscode
+.venv/
