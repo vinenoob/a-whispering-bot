@@ -14,7 +14,7 @@ from wisp_tz import tzinfos
 
 class Schedule(commands.Cog):
     LFG_BASE = "LFG"
-    slash_guilds = [366792929865498634]
+    slash_guilds = [842812244965326869]
     def __init__(self, client: commands.AutoShardedBot):
         self.client = client
         self.callback_done = threading.Event()

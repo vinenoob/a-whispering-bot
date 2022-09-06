@@ -25,7 +25,7 @@ client.add_cog(Name(client))
 # client.add_cog(Schedule(client))
 client.add_cog(TimeConvert(client))
 # slash_guilds = [842812244965326869, 366792929865498634, 160907545018499072]
-slash_guilds = [366792929865498634]
+slash_guilds = [842812244965326869]
 
 @client.event
 async def on_ready():
