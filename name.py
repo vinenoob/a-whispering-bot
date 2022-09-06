@@ -125,9 +125,9 @@ class Name(commands.Cog):
         print("Name cog up")
         doc_watch = users_ref.on_snapshot(self.on_snapshot)
         self.fbi_watchlist.start()
-        member: discord.Member
-        for member in self.client.get_all_members():
-            await enforce_name(member)
+        # member: discord.Member
+        # for member in self.client.get_all_members():
+        #     await enforce_name(member)
 
     roleOptions = [
         create_option(
