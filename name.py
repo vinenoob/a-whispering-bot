@@ -81,7 +81,7 @@ class Name(commands.Cog):
     # slash_guilds = [842812244965326869, 366792929865498634, 160907545018499072]
     slash_guilds = [842812244965326869]
     def __init__(self, client):
-        self.client = client
+        self.client: commands.AutoShardedBot = client
         self.have_skipped_boot = False
         self.callback_done = threading.Event()
         self.ids_to_update = []
@@ -137,6 +137,36 @@ class Name(commands.Cog):
             required=True,
         )
     ]
+
+    @cog_ext.cog_subcommand(base=NAMING_BASE, name="force_register", description="Add a pronoun role to the watchlist", guild_ids=slash_guilds)
+    async def force_register(self, ctx: SlashContext):
+        if ctx.author.id != 160907412205862913:
+            return
+        members = self.client.get_all_members()
+        member: discord.Member
+        for member in members:
+            if member.bot or member.guild.id != 842812244965326869:
+                continue
+            member_id = str(member.id)
+            nick: str = member.nick
+            if nick is None:
+                continue
+            find = nick.find(')')
+            if find != -1:
+                nick = nick[find + 2:]
+            print(f"name would be {nick} id is {member_id}")
+            users_doc_ref = users_ref.document(member_id)
+            user_doc = users_doc_ref.get()
+            if not user_doc.exists:
+                user_json = {"d2name": nick}
+                users_doc_ref.set(user_json)
+            # else:
+            #     user_json = user_doc.to_dict()
+            #     user_json["d2name"] = nick
+            #     users_doc_ref.update(user_json)
+
+            
+
 
     @cog_ext.cog_subcommand(base=NAMING_BASE, name="pronoun_add", description="Add a pronoun role to the watchlist", options=roleOptions, guild_ids=slash_guilds)
     async def add_role(self, ctx: SlashContext, role):

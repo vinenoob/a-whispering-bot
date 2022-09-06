@@ -20,7 +20,7 @@ intents = discord.Intents.default()
 intents.members = True
 intents.reactions = True
 client = commands.AutoShardedBot(commands.when_mentioned_or('?'), intents = intents)
-slash = SlashCommand(client, override_type=True, sync_commands=True, debug_guild=366792929865498634)
+slash = SlashCommand(client, override_type=True, sync_commands=True, debug_guild=842812244965326869)
 client.add_cog(Name(client))
 # client.add_cog(Schedule(client))
 client.add_cog(TimeConvert(client))
@@ -37,7 +37,7 @@ async def register(ctx: SlashContext):
 
 def main():
     key = ""
-    with open("key2.txt", "r") as keyfile:
+    with open("key.txt", "r") as keyfile:
         key = keyfile.read()
 
     client.run(key)
