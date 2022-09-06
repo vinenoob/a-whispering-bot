@@ -79,7 +79,7 @@ async def enforce_name(member: discord.Member):
 class Name(commands.Cog):
     NAMING_BASE = "Naming"
     # slash_guilds = [842812244965326869, 366792929865498634, 160907545018499072]
-    slash_guilds = [366792929865498634]
+    slash_guilds = [842812244965326869]
     def __init__(self, client):
         self.client = client
         self.have_skipped_boot = False
