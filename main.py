@@ -22,7 +22,7 @@ intents.reactions = True
 client = commands.AutoShardedBot(commands.when_mentioned_or('?'), intents = intents)
 slash = SlashCommand(client, override_type=True, sync_commands=True, debug_guild=366792929865498634)
 client.add_cog(Name(client))
-client.add_cog(Schedule(client))
+# client.add_cog(Schedule(client))
 client.add_cog(TimeConvert(client))
 # slash_guilds = [842812244965326869, 366792929865498634, 160907545018499072]
 slash_guilds = [366792929865498634]
@@ -33,7 +33,7 @@ async def on_ready():
 
 @slash.slash(name="register", description="Register for the Whipering Mandrake bot!", guild_ids=slash_guilds)
 async def register(ctx: SlashContext):
-    await ctx.send("https://d2firebase.web.app/")
+    await ctx.send("Go to https://d2firebase.web.app/ to register! Yes it does look sketchy but I promise it is safe")
 
 def main():
     key = ""

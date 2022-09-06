@@ -19,7 +19,7 @@ def get_D2_name_from_member(member: discord.Member) -> str:
         if userDoc.exists: #if they aren't in the database, then just use their discord name for now
             user_cache[member.id]["name"] = userDoc.to_dict()['d2name']
         else:
-            user_cache[member.id]["name"] = member.name
+            user_cache[member.id]["name"] = member.nick
     return user_cache[member.id]["name"]
 
 def get_D2_name_with_prefix_from_member(member: discord.Member):
@@ -77,7 +77,7 @@ async def enforce_name(member: discord.Member):
 #             print(f"Can't edit {member}")
 
 class Name(commands.Cog):
-    PRONOUN_BASE = "Pronoun"
+    NAMING_BASE = "Naming"
     # slash_guilds = [842812244965326869, 366792929865498634, 160907545018499072]
     slash_guilds = [366792929865498634]
     def __init__(self, client):
@@ -138,7 +138,7 @@ class Name(commands.Cog):
         )
     ]
 
-    @cog_ext.cog_subcommand(base=PRONOUN_BASE, name="add", description="Add a pronoun role to the watchlist", options=roleOptions, guild_ids=slash_guilds)
+    @cog_ext.cog_subcommand(base=NAMING_BASE, name="pronoun_add", description="Add a pronoun role to the watchlist", options=roleOptions, guild_ids=slash_guilds)
     async def add_role(self, ctx: SlashContext, role):
         if ctx.author.guild_permissions.administrator:
             guild_id = str(ctx.guild_id)
@@ -154,7 +154,7 @@ class Name(commands.Cog):
         else:
             await ctx.send("You don't have permissions")
     
-    @cog_ext.cog_subcommand(base=PRONOUN_BASE, name="remove", description="Remove a pronoun role to the watchlist", options=roleOptions, guild_ids=slash_guilds)
+    @cog_ext.cog_subcommand(base=NAMING_BASE, name="pronoun_remove", description="Remove a pronoun role to the watchlist", options=roleOptions, guild_ids=slash_guilds)
     async def remove_role(self, ctx: SlashContext, role):
         if ctx.author.guild_permissions.administrator:
             role_id = str(role.id)
@@ -170,7 +170,7 @@ class Name(commands.Cog):
         else:
             await ctx.send("You don't have permissions")
 
-    @cog_ext.cog_subcommand(base=PRONOUN_BASE, name="list", description="List watched pronouns", guild_ids=slash_guilds)
+    @cog_ext.cog_subcommand(base=NAMING_BASE, name="pronoun_list", description="List watched pronouns", guild_ids=slash_guilds)
     async def send_pronouns(self, ctx: SlashContext):
         '''does this appear?'''
         guild_id = str(ctx.guild_id)
@@ -183,8 +183,40 @@ class Name(commands.Cog):
         for pronoun in pronouns:
             out += f"{pronoun.mention} "
         await ctx.send(out)
+
+    name_set_options = [
+        create_option(
+            name="user",
+            option_type=SlashCommandOptionType.USER,
+            required=True,
+            description="The user to edit"
+        ),
+        create_option(
+            name="name",
+            option_type=SlashCommandOptionType.STRING,
+            required=True,
+            description="The new name for the user"
+        )
+    ]
     
-    @cog_ext.cog_subcommand(base=PRONOUN_BASE, name="help", description="Get some help with the pronoun commands", options=roleOptions, guild_ids=slash_guilds)
+    @cog_ext.cog_subcommand(base=NAMING_BASE, name="name_set", description="List watched pronouns", guild_ids=slash_guilds)
+    async def name_set(self, ctx: SlashContext, user: discord.User, name: str):
+        if ctx.author.guild_permissions.administrator:
+            member_id = str(user.id)
+            users_doc_ref = users_ref.document(member_id)
+            user_doc = users_doc_ref.get()
+            if not user_doc.exists:
+                user_json = {"d2name": name}
+                users_doc_ref.set(user_json)
+            else:
+                user_json = user_doc.to_dict()
+                user_json["d2name"] = name
+                users_doc_ref.update(user_json)
+            await ctx.send(f"Updating {user} nick to {name}")
+        else:
+            await ctx.send("You no have permission for this")
+    
+    @cog_ext.cog_subcommand(base=NAMING_BASE, name="help", description="Get some help with the pronoun commands", guild_ids=slash_guilds)
     async def help(self, ctx: SlashContext):
         await ctx.send('''
     The purpose of this bot is to watch for a user entering a voice channel and adding their pronoun to the start of their name. Use the "pronoun_add" slash command to add a role to the watch list
