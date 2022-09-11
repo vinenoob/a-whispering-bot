@@ -13,13 +13,17 @@ from whispfirebase import *
 user_cache = {}
 
 def get_D2_name_from_member(member: discord.Member) -> str:
+    # sourcery skip: merge-else-if-into-elif
     if member.id not in user_cache:
         user_cache[member.id] = {}
         userDoc = users_ref.document(str(member.id)).get()
         if userDoc.exists: #if they aren't in the database, then just use their discord name for now
             user_cache[member.id]["name"] = userDoc.to_dict()['d2name']
         else:
-            user_cache[member.id]["name"] = member.nick
+            if member.nick is None:
+                user_cache[member.id]["name"] = member.name
+            else:
+                user_cache[member.id]["name"] = member.nick
     return user_cache[member.id]["name"]
 
 def get_D2_name_with_prefix_from_member(member: discord.Member):
