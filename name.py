@@ -7,6 +7,8 @@ from discord_slash import cog_ext, SlashContext
 from discord_slash.model import SlashCommandOptionType
 from discord_slash.utils.manage_commands import create_option
 from discord.utils import get
+from firebase_admin import firestore
+
 
 from whispfirebase import *
 
@@ -89,6 +91,7 @@ class Name(commands.Cog):
         self.have_skipped_boot = False
         self.callback_done = threading.Event()
         self.ids_to_update = []
+        self.doc_watch: firestore.firestore.Watch = None
 
     
     def on_snapshot(self, doc_snapshot, changes, read_time):
@@ -123,11 +126,15 @@ class Name(commands.Cog):
                 member: discord.Member = guild.get_member(user.id)
                 await enforce_name(member)
         self.ids_to_update = []
+        if not self.doc_watch.is_active:
+            self.have_skipped_boot = False
+            self.doc_watch = users_ref.on_snapshot(self.on_snapshot)
+
 
     @commands.Cog.listener()
     async def on_ready(self):
         print("Name cog up")
-        doc_watch = users_ref.on_snapshot(self.on_snapshot)
+        self.doc_watch = users_ref.on_snapshot(self.on_snapshot)
         self.fbi_watchlist.start()
         # member: discord.Member
         # for member in self.client.get_all_members():
