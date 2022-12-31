@@ -38,8 +38,8 @@ def get_D2_name_with_prefix_from_member(member: discord.Member):
     if rolesToWatchSet & memberRolesSet:
         stringRoles = rolesToWatchSet.intersection(memberRolesSet)
         roles = [member.guild.get_role(int(stringRole)) for stringRole in stringRoles]
-        role = max(roles, key= lambda k: k.position)
-        role_string = str(role).split('/')[0]
+        role_string = "".join(str(role).split('/')[0] + "/" for role in roles)
+        role_string = role_string[:-1]
         user_cache[member.id]["pronoun name"] = f"({role_string}) {d2_username}"[:32]
     else:
         print(f"No roles found for {member}")
