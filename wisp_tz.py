@@ -11,5 +11,5 @@ tzinfos = {
     "PT": gettz("US/Pacific"),
 }
 
-for tz in tzinfos.keys():
-    tzinfos[tz.lower()] = tzinfos[tz]
+# for tz in tzinfos.keys():
+#     tzinfos[tz.lower()] = tzinfos[tz]
