@@ -10,3 +10,6 @@ tzinfos = {
     "PST": gettz("US/Pacific"),
     "PT": gettz("US/Pacific"),
 }
+
+for tz in tzinfos:
+    tzinfos[tz.lower()] = tzinfos[tz]

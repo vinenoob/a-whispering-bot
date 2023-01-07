@@ -35,7 +35,7 @@ class TimeConvert(commands.Cog):
         #         as_timezone = timezone_to_utc[timezone]
         #         string_match_split.pop()
         #         string_match = ' '.join(string_match_split)
-        dt_obj = parser.parse(f"{string_match}", tzinfos=tzinfos)
+        dt_obj = parser.parse(f"{string_match}".lower(), tzinfos=tzinfos)
         dt_obj = dt_obj.astimezone(pytz.UTC)
         # dt_obj = datetime.strptime(string_match, "%H:%M%p %Z")
         time_embed.add_field(name="Time", value=f"<t:{int(datetime.timestamp(dt_obj))}:t>")
