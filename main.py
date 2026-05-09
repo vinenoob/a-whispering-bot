@@ -20,7 +20,7 @@ intents = discord.Intents.default()
 intents.members = True
 intents.reactions = True
 client = commands.AutoShardedBot(commands.when_mentioned_or('?'), intents = intents)
-slash = SlashCommand(client, override_type=True, sync_commands=True, debug_guild=842812244965326869)
+slash = SlashCommand(client, override_type=True, sync_commands=True, debug_guild=897201844256931891)
 client.add_cog(Name(client))
 # client.add_cog(Schedule(client))
 client.add_cog(TimeConvert(client))
