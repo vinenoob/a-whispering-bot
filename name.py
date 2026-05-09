@@ -8,19 +8,20 @@ from discord_slash.model import SlashCommandOptionType
 from discord_slash.utils.manage_commands import create_option
 from discord.utils import get
 from firebase_admin import firestore
-
+from cachetools import LRUCache
 
 from whispfirebase import *
 
+#consider using something like LRUCache from cachetools
 user_cache = {}
 
 def get_D2_name_from_member(member: discord.Member) -> str:
     # sourcery skip: merge-else-if-into-elif
     if member.id not in user_cache:
         user_cache[member.id] = {}
-        userDoc = users_ref.document(str(member.id)).get()
-        if userDoc.exists: #if they aren't in the database, then just use their discord name for now
-            user_cache[member.id]["name"] = userDoc.to_dict()['d2name']
+        user = get_user_doc(member.id)
+        if user.exists: #if they aren't in the database, then just use their discord name for now
+            user_cache[member.id]["name"] = user.to_dict()['d2name']
         else:
             if member.nick is None:
                 user_cache[member.id]["name"] = member.name
@@ -61,33 +62,10 @@ async def enforce_name(member: discord.Member):
         except discord.errors.Forbidden:
             print(f"Can't edit {member}")
 
-# async def enforce_name2(member: discord.Member):
-#     # sourcery skip: merge-else-if-into-elif
-#     name: str
-#     if member.voice is None:
-#         if member.id in user_cache:
-#             name = user_cache[member.id]['name']
-#         else:
-#             name = get_D2_name_from_member(member)
-#             user_cache[member.id] = {'name': name}
-#     else:
-#         if member.id in user_cache and 'pronoun name' in user_cache[member.id]:
-#             name = user_cache[member.id]['pronoun name']
-#         else:
-#             if member.id not in user_cache:
-#                 user_cache[member.id] = {}
-#             name = get_D2_name_with_prefix_from_member(member)
-#             user_cache[member.id]['pronoun name'] = name
-#     if member.display_name != name:
-#         try:
-#             await member.edit(nick=name)
-#         except discord.errors.Forbidden:
-#             print(f"Can't edit {member}")
-
 class Name(commands.Cog):
     NAMING_BASE = "Naming"
     # slash_guilds = [842812244965326869, 366792929865498634, 160907545018499072]
-    slash_guilds = [842812244965326869]
+    slash_guilds = [842812244965326869, 897201844256931891]
     def __init__(self, client):
         self.client: commands.AutoShardedBot = client
         self.have_skipped_boot = False

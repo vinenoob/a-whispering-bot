@@ -9,3 +9,6 @@ db = firestore.client()
 users_ref: firestore.firestore.CollectionGroup = db.collection(u'users')
 guilds_ref: firestore.firestore.CollectionGroup = db.collection(u'guilds')
 events_ref: firestore.firestore.CollectionGroup = db.collection(u'events')
+
+def get_user_doc(user_id: int) -> firestore.firestore.DocumentReference:
+    return users_ref.document(str(user_id)).get()
