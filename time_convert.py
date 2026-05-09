@@ -1,7 +1,6 @@
 import discord
 import pytz
 from discord.ext import commands
-from discord_slash import cog_ext, SlashContext
 from datetime import date, datetime, tzinfo
 import re
 from dateutil import parser
