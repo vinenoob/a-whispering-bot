@@ -46,15 +46,47 @@ def get_D2_name_with_prefix_from_member(member: discord.Member):
     return user_cache[member.id]["pronoun name"]
 
 
+def _strip_pronoun_prefix(nick: str) -> str:
+    if nick.startswith("(") and ")" in nick:
+        return nick[nick.find(")") + 1:].lstrip()
+    return nick
+
+
+def _build_pronoun_prefix(member: discord.Member) -> str:
+    guild_doc = guilds_ref.document(str(member.guild.id)).get()
+    if not guild_doc.exists:
+        return ""
+    member_role_ids = {str(role.id) for role in member.roles}
+    watched = set(guild_doc.to_dict().get('pronouns_watch', []))
+    matched_ids = watched & member_role_ids
+    if not matched_ids:
+        return ""
+    roles = [member.guild.get_role(int(rid)) for rid in matched_ids]
+    roles = [r for r in roles if r is not None]
+    roles.sort(key=lambda role: role.position, reverse=True)
+    return "/".join(str(role).split('/')[0] for role in roles)
+
+
 async def enforce_name(member: discord.Member):
-    name: str
+    fallback = member.global_name or member.name
+    base = _strip_pronoun_prefix(member.nick) if member.nick else fallback
+
     if member.voice is None:
-        name = get_D2_name_from_member(member)
+        if member.nick is None:
+            return
+        target = None if base == fallback else base
     else:
-        name = get_D2_name_with_prefix_from_member(member)
-    if member.display_name != name:
+        prefix = _build_pronoun_prefix(member)
+        if prefix:
+            target = f"({prefix}) {base}"[:32]
+        elif member.nick is None:
+            return
+        else:
+            target = None if base == fallback else base
+
+    if member.nick != target:
         try:
-            await member.edit(nick=name)
+            await member.edit(nick=target)
         except discord.errors.Forbidden:
             print(f"Can't edit {member}")
 
